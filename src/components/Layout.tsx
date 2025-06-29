@@ -36,7 +36,7 @@ export function Layout({ children }: LayoutProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Dumbbell className="h-6 w-6 text-emerald-500" />
-            <span className="font-bold text-lg">GymTracker</span>
+            <span className="font-bold text-lg">Bishgogym</span>
           </div>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

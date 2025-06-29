@@ -53,8 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     if (error) throw error;
     
-    // Profile creation is handled automatically by the database trigger
-    // No need to manually create the profile record
+    // Profile creation is handled automatically by database trigger
+    // No need to manually create profile record here
   };
 
   const signIn = async (email: string, password: string) => {

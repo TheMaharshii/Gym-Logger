@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { Plus, Play, Clock, Calendar } from 'lucide-react';
+import { Plus, Play, Clock, Calendar, Edit, Trash2, MoreVertical } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
 interface Workout {
@@ -24,6 +24,9 @@ export function WorkoutList() {
   const { user } = useAuth();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -52,11 +55,43 @@ export function WorkoutList() {
     }
   };
 
+  const handleDeleteWorkout = async (workoutId: string) => {
+    setDeletingId(workoutId);
+    try {
+      const { error } = await supabase
+        .from('workouts')
+        .delete()
+        .eq('id', workoutId)
+        .eq('user_id', user!.id);
+
+      if (error) throw error;
+      
+      setWorkouts(workouts.filter(w => w.id !== workoutId));
+      setShowDeleteConfirm(null);
+    } catch (error) {
+      console.error('Error deleting workout:', error);
+      alert('Error deleting workout. Please try again.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
+
+  const toggleDropdown = (workoutId: string) => {
+    setActiveDropdown(activeDropdown === workoutId ? null : workoutId);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setActiveDropdown(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   if (loading) {
     return (
@@ -119,6 +154,45 @@ export function WorkoutList() {
                       Start
                     </Link>
                   )}
+                  
+                  {/* Dropdown Menu */}
+                  <div className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleDropdown(workout.id);
+                      }}
+                      className="p-2 text-gray-400 hover:text-white transition-colors"
+                    >
+                      <MoreVertical className="h-5 w-5" />
+                    </button>
+                    
+                    {activeDropdown === workout.id && (
+                      <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-10">
+                        <div className="py-1">
+                          <Link
+                            to={`/workouts/${workout.id}/edit`}
+                            className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                            onClick={() => setActiveDropdown(null)}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Workout
+                          </Link>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowDeleteConfirm(workout.id);
+                              setActiveDropdown(null);
+                            }}
+                            className="flex items-center w-full px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Workout
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -166,6 +240,33 @@ export function WorkoutList() {
               <Plus className="h-5 w-5 mr-2" />
               Create Your First Workout
             </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold text-white mb-2">Delete Workout</h3>
+            <p className="text-gray-400 mb-6">
+              Are you sure you want to delete this workout? This action cannot be undone.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteWorkout(showDeleteConfirm)}
+                disabled={deletingId === showDeleteConfirm}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-800 text-white rounded-lg transition-colors"
+              >
+                {deletingId === showDeleteConfirm ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}

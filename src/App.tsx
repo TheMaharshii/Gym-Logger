@@ -7,6 +7,7 @@ import { SignupForm } from './components/auth/SignupForm';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { WorkoutList } from './components/workouts/WorkoutList';
 import { CreateWorkout } from './components/workouts/CreateWorkout';
+import { EditWorkout } from './components/workouts/EditWorkout';
 import { WorkoutSession } from './components/workouts/WorkoutSession';
 import { RoutineList } from './components/routines/RoutineList';
 import { FoodTracker } from './components/food/FoodTracker';
@@ -90,6 +91,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <CreateWorkout />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/workouts/:id/edit"
+            element={
+              <ProtectedRoute>
+                <EditWorkout />
               </ProtectedRoute>
             }
           />
